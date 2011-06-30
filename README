@@ -1,0 +1,14 @@
+Extension to ITFC file compressor (from another repo) using a new methodology,
+the Binary Indicator Symbol Ordering Notation, to further reduce file size.
+
+Input the output file from ITFC and generate large binary sequences built from the
+occurence of common symbols to further compress the file by replacing these with
+ascii tokens that represent blocks of these sequences.
+
+Each such binary sequence represents 2 commonly found symbols. It is possible to
+iterate and generate many such sequences for 2 symbols at a time, in turn each then
+converted to compact ascii-base representation, until most or even all symbols in
+original ITFC output file are processed.
+
+Of course, final BISON app will incorporate ITFC to combine both compression stages
+in one go.
