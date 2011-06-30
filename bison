@@ -46,8 +46,6 @@ sub extractSymbols {
     my $symbol0 = $_[1];
     my @targetSeq = @_[2..(scalar (@_) - 1)];
     undef @mainSeq;
-    print scalar (@_);
-    print scalar (@targetSeq);
     my @symbolOrder;
     my $mainSeqCount = 0;
     my $count = 0;
@@ -66,9 +64,6 @@ sub extractSymbols {
               $mainSeqCount++;
         }
     }
-    print "INDCOUNT";
-    print scalar (@symbolOrder), "\n";
-    print scalar (@mainSeq), "\n";
     return @symbolOrder;
 }
 
