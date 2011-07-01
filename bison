@@ -15,6 +15,7 @@ open(BISONOP, ">$ARGV[1]") or die "File access error: $!\n";
 my %index, %base;
 my @nums = (33..126);         # Use ascii chars 33 - 126
 my $count = 0;
+my $reducedEnough; # global boolean, check if further BISON reduction needed
 foreach (@nums) {             # Map decimals 0-94 to corresponding
     $base{$count} = chr $_;   # ascii charcters in 33-126 range,
     $count++;                      
@@ -27,17 +28,25 @@ while (<ITFCFILE>) {
         @inputArr[$charCount] = $_; 
     }    
 }
-print scalar (@inputArr);
 @caretPipe = &extractSymbols("^",  "|", @inputArr);
 print @mainSeq, "\n";
-print scalar (@mainSeq);
 @tempo = @mainSeq[2..(scalar (@mainSeq) - 1)];
-print scalar (@tempo);
 &makeBlocks(@caretPipe);
 @quotesAt = &extractSymbols("\"",  "@", @mainSeq);
+print @quotesAt, "\n";
 print @mainSeq, "\n";
 &makeBlocks(@quotesAt);
-print BISONOP @mainSeq;
+#print BISONOP @mainSeq;
+@arr = &twoMostCommonSymbols(@mainSeq);
+
+print "TWO SYMB ";    #### PRINT FOR DEVELOPMENT PURPOSES
+print @arr, "\n";
+@next = &extractSymbols($arr[0], $arr[1], @mainSeq);
+&makeBlocks(@next);
+print BISONOP @mainSeq; # only output final reduced @mainseq
+print @mainSeq, "\n";
+print "NEXT SYMBS ";
+print @next, "\n";
 
 ########################## SUBROUTINES ##############################
 
@@ -60,8 +69,8 @@ sub extractSymbols {
                 $count++;
             }
         } else {
-              @mainSeq[$mainSeqCount] = $_;
-              $mainSeqCount++;
+            @mainSeq[$mainSeqCount] = $_; # residual to global array
+            $mainSeqCount++;
         }
     }
     return @symbolOrder;
@@ -93,10 +102,7 @@ sub makeBlocks {  # Break bin seq into blocks of 26, last block gen. smaller
         $blockNum++;
         $block = "";
     }# end foreach
-    print BISONOP "\n";
-    print $indCount, "\n";
-    print $indCount%26, "\n";
-    print $numBlocks, "\n";
+    print BISONOP "\n";    
 } 
 
 sub padToken {
@@ -111,12 +117,8 @@ sub genBinary {
     my $binaryString = "0b";
     my $binaryInput = $_[0];
     $binaryString .= $binaryInput;
-    print $binaryString, "\n";
     my $deci = oct( $binaryString );
-    print $deci, "\n";
     my $cpToken = &genToken($deci);
-    print length ($cpToken), "\n";
-    print $cpToken, "\n";
     return $cpToken;
 }
 
@@ -197,3 +199,43 @@ sub fourChar {
     return $tok;
 }
 
+sub findIndexMax {
+    my @array = @_;
+    my $indMax = 0;
+    $array[$indMax] > $array[$_] or $indMax = $_ for 1 .. $#array;
+    return $indMax;
+}
+
+sub twoMostCommonSymbols {
+    my @targetSeq = @_;
+    my @symbolArray, @twoSymbols, @dimin, $max1, $max2; 
+    my $symb1, $symb2;
+    foreach (0..93) {
+        $symbolArray[$_] = 0;
+    }
+    foreach (@targetSeq) {
+        foreach $i (0..93) {
+            if (ord $_ == ($i + 33)) {
+                $symbolArray[$i]++
+            }        
+        }        
+    }
+    #ADD MORE TO ACCESS FREQUENCY VALUES AT MAX INDICES TO DETERMINE IF
+    #MORE REDUCTION NEEDED. WHEN FREQ1 + FREQ2 < MINVALUE THEN SET
+    #REDUCEDENOUGH GLOBAL TO 0. ALLOW MINVALUE TO BE VARIED TO FIND GENERAL
+    #OPTIMUM EMPIRICALLY    
+    $max1 = &findIndexMax(@symbolArray);
+    $symb1 = chr ($max1 + 33);
+    push (@dimin, @symbolArray[0..($max1 -1)] );
+    push (@dimin, @symbolArray[($max1 +1)..$#symbolArray] );
+    $max2 = &findIndexMax(@dimin);
+    if ($max2 > $max1) {        # Account for @dimin array being 1 smaller
+        $symb2 = chr ($max2 + 1 + 33)} 
+    else {
+        $symb2 = chr ($max2 + 33)
+    }
+    undef @twoSymbols;
+    push (@twoSymbols, $symb1);
+    push (@twoSymbols, $symb2);
+    return @twoSymbols;    
+}
